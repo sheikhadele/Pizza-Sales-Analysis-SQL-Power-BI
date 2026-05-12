@@ -42,10 +42,10 @@ An end-to-end data analysis project that explores pizza sales data using SQL for
 ├── dashboard/          # Power BI (.pbix) file
 └── README.md
 
-## Dashboard Preview 1
+## Dashboard 1
 ![Dashboard Preview](pizza_sales_report1.png)
 
-## Dashboard Preview 2
+## Dashboard 2
 ![Dashboard Preview](pizza_sales_report2.png)
 
 ## How to Use
