@@ -1,0 +1,203 @@
+CREATE TABLE pizza_sales
+(
+pizza_id INT PRIMARY KEY,
+order_id INT,
+pizza_name_id VARCHAR(50),
+quantity INT,
+order_date DATE,
+order_time TIME,
+unit_price DECIMAL (6,2),
+total_price DECIMAL (6,2),
+pizza_size VARCHAR(10),
+pizza_category VARCHAR(50),
+pizza_ingredients VARCHAR(150),
+pizza_name VARCHAR(150)
+)
+
+DROP TABLE pizza_sales;
+
+SELECT * FROM pizza_sales;
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/pizza_sales.csv'
+INTO TABLE pizza_sales
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+-- KPI Requirements
+
+-- Total Revenue
+
+SELECT SUM (total_price) FROM pizza_sales;
+
+-- Average Order Value
+
+SELECT ROUND(AVG(total_sum),2) FROM (
+SELECT SUM (total_price) as total_sum FROM pizza_sales
+GROUP BY order_id) t;
+
+-- or
+
+WITH CTE AS (
+SELECT SUM (total_price) as total_sum FROM pizza_sales
+GROUP BY order_id
+)
+
+SELECT ROUND(AVG (total_sum),2) FROM CTE;
+
+SELECT SUM(total_price)/COUNT(DISTINCT order_id)
+FROM pizza_sales;
+
+--Total Pizza sold
+
+SELECT SUM(quantity) as Total_pizza_sold
+FROM pizza_sales;
+
+-- Total Orders
+
+SELECT COUNT (*) AS total_orders FROM (
+SELECT DISTINCT order_id FROM pizza_sales)t;
+
+-- Average Pizza's Per Order
+
+SELECT ROUND(AVG (total_count),2) AS Average_count FROM (
+SELECT SUM (quantity) as total_count FROM pizza_sales
+GROUP BY order_id) t;
+
+--OR
+
+WITH CTE AS (SELECT SUM (quantity) as total_count 
+FROM pizza_sales
+GROUP BY order_id)
+
+SELECT ROUND(AVG (total_count),2) as Average_count FROM CTE;
+
+--Total Order
+SELECT COUNT(DISTINCT order_id) as Total_orders FROM pizza_sales;
+
+
+-- Daily trend for total orders
+
+SELECT COUNT (DISTINCT order_id), order_date FROM pizza_sales
+GROUP BY  order_date;
+
+SELECT DAYNAME(order_date) AS order_day,
+COUNT (DISTINCT order_id) as Total_orders
+FROM pizza_sales
+GROUP BY DAYNAME(order_date), DAYOFWEEK(order_date)
+ORDER BY DAYOFWEEK(order_date);
+
+-- Order by DAYOFWEEK is used to order by the days not by alphabets
+-- of the days.
+
+
+-- Monthly trend for total orders
+
+SELECT MONTHNAME (order_date) AS order_month, 
+COUNT(DISTINCT order_id) as total_orders
+FROM pizza_sales
+GROUP BY MONTHNAME (order_date), MONTH(order_date)
+ORDER BY MONTH(order_date);
+
+--percentage of sales by pizza catagory
+
+SELECT pizza_name_id, CONCAT(ROUND(Total_quantity * 100 
+/
+(SELECT SUM (quantity) FROM pizza_sales),2),'%') as total_percentage FROM (
+
+SELECT pizza_name_id, SUM (quantity) as Total_quantity FROM pizza_sales
+GROUP BY pizza_name_id)t 
+ORDER BY total_percentage DESC;
+
+
+SELECT pizza_name_id, CONCAT(ROUND(SUM (quantity) * 100 / 
+SUM(SUM (quantity)) OVER (),2),'%') as total_percentage
+FROM pizza_sales
+GROUP BY pizza_name_id
+ORDER BY total_percentage DESC;
+
+
+--Pizza sales by pizza category
+
+SELECT pizza_category, CONCAT(ROUND(SUM(total_price) * 100/
+(SELECT SUM(total_price) FROM pizza_sales),2), '%') as percentage_sales
+FROM pizza_sales
+GROUP BY pizza_category;
+
+SELECT pizza_category, CONCAT(ROUND(SUM(total_price) * 100 / 
+SUM(SUM(total_price)) OVER () ,2),'%') as total_percentage
+FROM pizza_sales
+GROUP BY pizza_category;
+
+
+--For a specific month
+
+SELECT pizza_category, SUM(total_price) as Total_sales, CONCAT(ROUND(SUM(total_price) * 100 / 
+SUM(SUM(total_price)) OVER () ,2),'%') as total_percentage
+FROM pizza_sales
+WHERE MONTH(order_date) = 1
+GROUP BY pizza_category;
+
+-- EITHER WE CAN USE PART OF THE DATE (ORDER_DATE) or We can use EXTRACT.
+
+SELECT pizza_category, SUM(total_price) as Total_sales, CONCAT(ROUND(SUM(total_price) * 100 / 
+SUM(SUM(total_price)) OVER () ,2),'%') as total_percentage
+FROM pizza_sales
+WHERE QUARTER(order_date) = 3
+GROUP BY pizza_category;
+
+
+SELECT pizza_size, CONCAT(ROUND(SUM(total_price) * 100/
+(SELECT SUM(total_price) FROM pizza_sales WHERE QUARTER(order_date) = 3),2), '%') as percentage_sales
+FROM pizza_sales
+WHERE QUARTER(order_date) = 3
+GROUP BY pizza_size;
+
+--When ordered By SIZE.
+
+SELECT pizza_size, CONCAT(ROUND(SUM(total_price) * 100/
+(SELECT SUM(total_price) FROM pizza_sales WHERE QUARTER(order_date) = 3),2), '%') as percentage_sales
+FROM pizza_sales
+WHERE QUARTER(order_date) = 3
+GROUP BY pizza_size
+ORDER BY
+CASE WHEN pizza_size = 'S' THEN 1
+WHEN pizza_size = 'M' THEN 2
+WHEN pizza_size = 'L' THEN 3
+WHEN pizza_size = 'XL' THEN 4
+WHEN pizza_size = 'XXL' THEN 5
+END;
+
+-- Total pizza sold by catagory
+
+SELECT pizza_category, SUM(quantity) as Total_pizza_sold 
+FROM pizza_sales
+GROUP BY pizza_category;
+
+--	Top 5 Best Seller Pizza by Revenue, Total Quantity and Total Orders.
+
+SELECT pizza_name, SUM (total_price) as total_rev,
+SUM (quantity) as total_quantity,
+COUNT (DISTINCT order_id) as total_orders
+FROM pizza_sales
+GROUP BY pizza_name
+ORDER BY total_rev DESC
+LIMIT 5;
+
+
+--Bottom 5 Best seller Pizza by Revenue, Total Quantity and Total Orders.
+
+
+SELECT pizza_name, SUM (total_price) as total_rev,
+SUM (quantity) as total_quantity,
+COUNT (DISTINCT order_id) as total_orders
+FROM pizza_sales
+GROUP BY pizza_name
+ORDER BY total_rev
+LIMIT 5;
+
+SELECT AVG(total) FROM(
+SELECT order_id, SUM(quantity) as total
+FROM pizza_sales
+GROUP BY order_id)t;
