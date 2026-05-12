@@ -13,6 +13,23 @@ An end-to-end data analysis project that explores pizza sales data using SQL for
 - **SQL** — Data extraction, cleaning, and analysis
 - **Power BI** — Interactive dashboard and visualizations
 
+## 🗂️ Dataset Structure
+
+### Customers Table
+- pizza_id
+- pizza_id
+- order_id
+- pizza_name_id
+- quantity
+- order_date
+- order_time
+- unit_price
+- total_price
+- pizza_size
+- pizza_category
+- pizza_ingredients
+- pizza_name
+
 ## Key Insights
 - Total revenue, orders, and average order value
 - Best performing pizza categories and sizes
